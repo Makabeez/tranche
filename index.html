@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tranche — grants released milestone by milestone</title>
+<meta name="description" content="Grant escrow on GenLayer: each tranche is released when its terms are met, checked in code where decidable and by a validator jury where not.">
+<style>
+:root{--bg:#F6F5F1;--fg:#191917;--muted:#686760;--card:#FFF;--line:#E3E1D9;--ok:#1D9E75;--no:#D85A30;--wait:#B5761A;--accent:#191917;--fill:#EDEBE4}
+@media(prefers-color-scheme:dark){:root{--bg:#131312;--fg:#F1EFE8;--muted:#8E8D86;--card:#1D1D1B;--line:#2E2E2B;--accent:#F1EFE8;--fill:#262624}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+.hero{padding:72px 0 48px;border-bottom:1px solid var(--line)}
+.hero h1{font-size:40px;line-height:1.1;font-weight:600;margin:0 0 16px;letter-spacing:-0.02em}
+.hero .lede{font-size:19px;line-height:1.55;color:var(--muted);margin:0 0 28px;max-width:650px}
+.hero .lede strong{color:var(--fg);font-weight:500}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.chip{font-size:12px;padding:4px 11px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.cta a{display:inline-block;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none}
+.cta a.primary{background:var(--accent);color:var(--bg)}
+.cta a.ghost{border:1px solid var(--line);color:var(--fg)}
+section{padding:52px 0;border-bottom:1px solid var(--line)}
+section h2{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:0 0 20px}
+section h3{font-size:22px;font-weight:500;margin:0 0 12px;letter-spacing:-0.01em}
+section p{margin:0 0 14px;max-width:660px}
+section p.sub{color:var(--muted)}
+.quote{border-left:2px solid var(--line);padding:2px 0 2px 16px;margin:20px 0;color:var(--muted)}
+.quote strong{color:var(--fg);font-weight:500}
+pre{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;overflow:auto;font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;margin:16px 0}
+pre .j{color:var(--wait)}
+pre .c{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}.hero h1{font-size:32px}}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+.feat h4{font-size:15px;font-weight:500;margin:0 0 8px}
+.feat p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.6}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:8px 0 14px}
+@media(max-width:760px){.flow{grid-template-columns:1fr 1fr}}
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.step .n{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+.step .t{display:block;font-weight:500;margin:4px 0}
+.step .d{font-size:12.5px;color:var(--muted);line-height:1.5}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+th{text-align:left;font-weight:500;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.05em;padding:0 12px 10px 0}
+td{padding:10px 12px 10px 0;border-top:1px solid var(--line);vertical-align:top}
+code,.mono{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}
+#app{padding:52px 0 80px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:16px}
+.card h3{font-size:15px;font-weight:500;margin:0 0 14px}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+input,select{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font:inherit;font-size:14px}
+button{background:var(--accent);color:var(--bg);border:0;border-radius:8px;padding:9px 16px;font:inherit;font-size:14px;font-weight:500;cursor:pointer;margin-top:14px}
+button.ghost{background:none;color:var(--fg);border:1px solid var(--line)}
+.pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:20px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.PAID,.pill.COMPLETE,.pill.RULED{color:var(--ok);border-color:var(--ok)}
+.pill.INADMISSIBLE,.pill.INCONCLUSIVE{color:var(--no);border-color:var(--no)}
+.pill.OPEN,.pill.SUBMITTED,.pill.ACTIVE{color:var(--wait);border-color:var(--wait)}
+.g{border-top:1px solid var(--line);padding:18px 0}
+.g:first-of-type{border-top:0;padding-top:4px}
+.g h4{font-size:15px;font-weight:500;margin:0 0 4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.g > p{margin:4px 0;font-size:13px;color:var(--muted);word-break:break-word}
+.meter{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin:10px 0 4px;display:flex}
+.meter span{display:block;height:100%}
+.tr{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:10px}
+.tr.cur{border-color:var(--wait)}
+.tr .hd{display:flex;gap:10px;align-items:center;font-size:13.5px;flex-wrap:wrap}
+.tr .hd b{font-weight:500}
+.tr .amt{margin-left:auto;font:12.5px ui-monospace,Menlo,monospace;color:var(--muted)}
+.tr p{margin:6px 0 0;font-size:12.5px;color:var(--muted);word-break:break-word}
+.tag{font-size:11px;padding:1px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.rul{margin-top:8px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.rul div{display:flex;gap:10px;padding:6px 10px;font-size:12.5px;border-top:1px solid var(--line);align-items:center}
+.rul div:first-child{border-top:0}
+.rul .y{color:var(--ok)} .rul .n{color:var(--no)} .rul .q{color:var(--muted)}
+.v{font-size:12.5px;margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+.log{font:12px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);white-space:pre-wrap;max-height:200px;overflow:auto}
+.bar{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+footer{padding:28px 0 60px;color:var(--muted);font-size:13px}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <svg width="54" height="54" viewBox="0 0 48 48" style="display:block;margin-bottom:22px;color:var(--fg)" aria-hidden="true">
+    <g fill="currentColor">
+      <rect x="6" y="30" width="9" height="12" rx="2"/>
+      <rect x="19.5" y="21" width="9" height="21" rx="2" opacity="0.75"/>
+      <rect x="33" y="12" width="9" height="30" rx="2" opacity="0.45"/>
+      <path d="M8 18l7 6 13-14" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </svg>
+  <h1>Grant money that moves when the work does.</h1>
+  <p class="lede">Tranche escrows a grant in milestones. Each tranche is released when its terms are met: <strong>checked in code</strong> where the question is decidable, <strong>judged by a validator jury</strong> where it is not. No program manager reads the pull request. Neither side can take the money back while the other is waiting on a ruling.</p>
+  <div class="chips">
+    <span class="chip">Grants &amp; milestones</span>
+    <span class="chip">Tranched escrow</span>
+    <span class="chip">Mechanical + judged terms</span>
+    <span class="chip">Appeals with bonds</span>
+  </div>
+  <div class="cta">
+    <a class="primary" href="#app">Open the registry</a>
+    <a class="ghost" href="https://github.com/Makabeez/tranche">Source</a>
+    <a class="ghost" id="cta-contract" href="https://explorer-studio-dev.genlayer.com">Contract</a>
+  </div>
+</div>
+
+<section>
+  <h2>The problem</h2>
+  <h3>Every grant program is a review queue.</h3>
+  <p class="sub">A funder pays in milestones because nobody wants to pay for work that never ships. So each milestone waits for a person to open the repository, decide whether it matches what was promised, and release the next payment. The person holding the money is the person judging the work, and the builder waits on their calendar.</p>
+  <p class="sub">Most of what a milestone promises is checkable: the directory exists, the test file is there, the release has the right number of entries. A smaller part needs reading — is the README actually documentation, does the API do what the brief said. Tranche separates the two, runs the first in code and sends only the second to a jury.</p>
+</section>
+
+<section>
+  <h2>How a grant runs</h2>
+  <div class="flow">
+    <div class="step"><span class="n">01</span><span class="t">Open</span><span class="d">The funder escrows the full grant and names the builder. Tranches and their terms are fixed up front.</span></div>
+    <div class="step"><span class="n">02</span><span class="t">Submit</span><span class="d">Only the builder, only the current tranche, only evidence pinned to a commit SHA.</span></div>
+    <div class="step"><span class="n">03</span><span class="t">Settle</span><span class="d">Mechanical terms checked in code. The jury runs only if they all pass and judged terms remain.</span></div>
+    <div class="step"><span class="n">04</span><span class="t">Finalize</span><span class="d">Approved: paid, next tranche opens. Rejected: back to the builder to try again.</span></div>
+    <div class="step"><span class="n">05</span><span class="t">or Appeal</span><span class="d">The side the ruling went against stakes a bond equal to the tranche for a fresh review.</span></div>
+  </div>
+  <p class="note">A rejection does not refund the funder. The tranche stays escrowed for the builder's next attempt; the funder can only withdraw what has not been delivered, and only while nothing is under review.</p>
+</section>
+
+<section>
+  <h2>Terms</h2>
+  <p class="sub">Written per tranche, before any work starts. A term with a kind prefix is mechanical. Anything else is judged.</p>
+<pre><span class="c">// tranche 0 — scaffold, 0.1 GEN</span>
+contains: tranche.py
+contains: README.md
+<span class="c">// tranche 1 — tests and docs, 0.2 GEN</span>
+array_min: $ &gt;= 5
+contains: tests
+<span class="j">the README explains how to verify a deployment     &larr; judged</span></pre>
+  <div class="grid2">
+    <div class="feat">
+      <h4>Mechanical — decided in code</h4>
+      <p><code>contains</code>, <code>json_equals</code>, <code>json_exists</code>, <code>array_min</code>. Evaluated in deterministic Python after one consensus fetch, so every validator computes the same answer from the same bytes. If one fails, the jury is never convened.</p>
+    </div>
+    <div class="feat">
+      <h4>Judged — decided by the jury</h4>
+      <p>One boolean per term, and every validator must agree on every one. The jury returns nothing else: free text in a compared answer prevents consensus even when the verdicts are identical.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>What protects whom</h2>
+  <div class="grid2">
+    <div class="feat">
+      <h4>The builder</h4>
+      <p>The full grant is escrowed at opening, so it exists. The funder cannot cancel while a tranche is submitted, under review, ruled or under appeal. A rejection keeps the tranche open for another attempt rather than refunding it.</p>
+    </div>
+    <div class="feat">
+      <h4>The funder</h4>
+      <p>Tranches are delivered in order and only by the named builder. Evidence must pin a 40-character commit SHA, so it cannot be edited after submission. An approval can be appealed like a rejection.</p>
+    </div>
+    <div class="feat">
+      <h4>Both, from bad evidence</h4>
+      <p>A fetch that fills the reading window is refused as INCONCLUSIVE — validators shown a truncated artifact agree unanimously on false answers. A fetch that returns a rate-limit notice or an API error instead of the artifact is refused as INADMISSIBLE, and settle can simply be called again.</p>
+    </div>
+    <div class="feat">
+      <h4>Both, from a bad ruling</h4>
+      <p>Appealing costs a bond equal to the tranche. Overturned, the appellant gets it back. Upheld, it goes to the other side. Contesting a correct ruling is expensive, contesting a wrong one is free.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Lineage</h2>
+  <p class="sub">Tranche is the third contract in a line, and reuses what the first two proved on chain rather than rewriting it.</p>
+  <table>
+    <tr><th>Contract</th><th>What it established</th></tr>
+    <tr><td><a href="https://github.com/Makabeez/bountycourt-app">BountyCourt</a></td><td>Escrow that follows a per-criterion verdict, appeals with bonds, refusal to rule on truncated evidence, refusal to rule on an error response.</td></tr>
+    <tr><td><a href="https://github.com/Makabeez/exhibit">Exhibit</a></td><td>Mechanical terms in code ahead of the jury, and the measurement that a deterministic term is only as deterministic as the bytes it is given.</td></tr>
+    <tr><td><strong>Tranche</strong></td><td>Several escrows in sequence under one grant, a named builder, rejection as a retry rather than a refund, and a cancellation rule that cannot interrupt a review.</td></tr>
+  </table>
+</section>
+
+</div>
+
+<div class="wrap" id="app">
+  <h2 style="font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px">Live registry</h2>
+  <h3 style="font-size:22px;font-weight:500;margin:0 0 6px">Read the contract</h3>
+  <p class="note" style="margin:0 0 20px;max-width:640px">On GenLayer Studio Next (chain 61997). Grants load with every tranche, its terms and its per-term rulings — mechanical terms marked <span class="tag">code</span>, judged terms <span class="tag">jury</span>.</p>
+
+  <div class="card">
+    <div class="bar" style="justify-content:space-between">
+      <span id="net">not connected</span>
+      <span class="bar">
+        <select id="wsel" style="width:auto"><option>detecting…</option></select>
+        <button class="ghost" id="conn" style="margin:0">Connect</button>
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Registry</h3>
+    <label for="addr">Contract address</label>
+    <input id="addr" value="" placeholder="0x…" spellcheck="false">
+    <button id="load">Load registry</button>
+    <div class="bar" style="margin-top:12px"><span id="reg">—</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Grants <button class="ghost" id="refresh" style="margin:0;padding:4px 10px;font-size:12px;float:right">Refresh</button></h3>
+    <div id="list"><p class="note" style="margin:0">Loading…</p></div>
+  </div>
+
+  <div class="card">
+    <h3>Activity</h3>
+    <div class="log" id="log">ready</div>
+  </div>
+</div>
+
+<div class="wrap"><footer>
+  Tranche · <a href="https://github.com/Makabeez/tranche">source</a> ·
+  <a id="foot-contract" href="https://explorer-studio-dev.genlayer.com">contract</a> ·
+  built on <a href="https://genlayer.com">GenLayer</a> · MIT
+</footer></div>
+
+<script type="module">
+// Set once the contract is deployed on Studio Next.
+const CONTRACT = "";
+const EXPLORER = "https://explorer-studio-dev.genlayer.com";
+
+// The SDK is loaded dynamically with a fallback CDN and a visible failure:
+// a static import that fails takes the whole module down silently and the
+// page looks dead with no indication why.
+const CDNS = [
+  "https://esm.sh/genlayer-js@2.0.0-rc.1",
+  "https://cdn.jsdelivr.net/npm/genlayer-js@2.0.0-rc.1/+esm",
+];
+let createClient, studioDevnet, sdkError = null;
+async function loadSdk() {
+  for (const base of CDNS) {
+    try {
+      const main = await import(base);
+      const chains = await import(base.includes("jsdelivr") ? base.replace("/+esm", "/chains/+esm") : base + "/chains");
+      createClient = main.createClient;
+      studioDevnet = chains.studioDevnet;
+      return base;
+    } catch (e) { sdkError = e; }
+  }
+  return null;
+}
+
+const $ = id => document.getElementById(id);
+const log = m => { $("log").textContent = new Date().toLocaleTimeString() + "  " + m + "\n" + $("log").textContent; };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const KINDS = ["contains:", "json_equals:", "json_exists:", "array_min:"];
+const isMech = t => KINDS.some(k => String(t).startsWith(k));
+const gen = w => { try { const b = BigInt(w || 0); const whole = b / 10n**18n; const frac = (b % 10n**18n).toString().padStart(18, "0").replace(/0+$/, ""); return whole + (frac ? "." + frac.slice(0, 4) : "") + " GEN"; } catch { return w + " wei"; } };
+const short = a => a ? a.slice(0, 6) + "…" + a.slice(-4) : "";
+
+if (CONTRACT) {
+  $("addr").value = CONTRACT;
+  $("cta-contract").href = $("foot-contract").href = EXPLORER + "/address/" + CONTRACT;
+}
+
+let readClient = null, writeClient = null, contract = null;
+
+const wallets = new Map();
+function renderWallets() {
+  const f = [...wallets.values()];
+  $("wsel").innerHTML = f.length
+    ? f.map(w => `<option value="${esc(w.info.uuid)}">${esc(w.info.name)}</option>`).join("")
+    : (window.ethereum ? '<option value="legacy">injected</option>' : "<option>no wallet</option>");
+}
+window.addEventListener("eip6963:announceProvider", e => {
+  if (!wallets.has(e.detail.info.uuid)) { wallets.set(e.detail.info.uuid, e.detail); renderWallets(); }
+});
+window.dispatchEvent(new Event("eip6963:requestProvider"));
+setTimeout(renderWallets, 400);
+setTimeout(() => { window.dispatchEvent(new Event("eip6963:requestProvider")); renderWallets(); }, 1500);
+setTimeout(renderWallets, 3000);
+
+async function ensureChain(p) {
+  try {
+    await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0xf22d" }] });
+  } catch (e) {
+    await p.request({ method: "wallet_addEthereumChain", params: [{
+      chainId: "0xf22d", chainName: "GenLayer Studio Next",
+      rpcUrls: ["https://studio-next.genlayer.com/api"],
+      nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+      blockExplorerUrls: [EXPLORER]
+    }] });
+  }
+}
+
+$("conn").onclick = async () => {
+  const v = $("wsel").value;
+  const p = (v && wallets.has(v)) ? wallets.get(v).provider : window.ethereum;
+  if (!p) return log("no wallet available");
+  if (!createClient) return log("SDK not loaded, cannot connect");
+  try {
+    const [a] = await p.request({ method: "eth_requestAccounts" });
+    await ensureChain(p);
+    writeClient = createClient({ chain: studioDevnet, account: a, provider: p });
+    $("conn").textContent = "Connected";
+    $("net").textContent = short(a);
+    log("connected " + a);
+  } catch (e) { log("connect failed: " + (e.message || e)); }
+};
+
+async function loadRegistry() {
+  const a = $("addr").value.trim();
+  if (!a) {
+    $("list").innerHTML = '<p class="note" style="margin:0">The contract has not been deployed yet. Grants will appear here once it is.</p>';
+    return;
+  }
+  if (!/^0x[0-9a-fA-F]{40}$/.test(a)) return log("enter a contract address");
+  if (!readClient) return log("SDK not loaded");
+  contract = a;
+  try {
+    const name = await readClient.readContract({ address: contract, functionName: "get_registry_name", args: [] });
+    $("reg").innerHTML = esc(name) + ' <span class="mono">' + esc(a) + "</span>";
+    log("loaded registry: " + name);
+    refresh();
+  } catch (e) {
+    const m = "Could not read the registry: " + (e.message || e);
+    log(m);
+    $("list").innerHTML = '<p class="note" style="margin:0;color:var(--no)">' + esc(m) + '</p>';
+  }
+}
+$("load").onclick = loadRegistry;
+$("refresh").onclick = () => refresh();
+
+function renderTranche(t, i, current, active) {
+  const terms = Array.isArray(t.terms) ? t.terms : [];
+  const rulings = Array.isArray(t.rulings) ? t.rulings : [];
+  const met = {};
+  rulings.forEach(r => { met[r.id] = r.met; });
+  const ruled = rulings.length > 0;
+  const rows = terms.map((term, k) => {
+    const mark = !ruled ? '<span class="q">·</span>' : (met[k] ? '<span class="y">✓</span>' : '<span class="n">✗</span>');
+    return `<div>${mark}<span class="mono">${esc(term)}</span><span class="tag" style="margin-left:auto">${isMech(term) ? "code" : "jury"}</span></div>`;
+  }).join("");
+  const isCur = active && i === current;
+  return `<div class="tr${isCur ? " cur" : ""}">
+    <div class="hd"><b>Tranche ${i}</b><span class="pill ${esc(t.status)}">${esc(t.status)}</span>
+      ${ruled ? (t.jury_convened ? '<span class="tag">jury convened</span>' : '<span class="tag">no jury</span>') : ""}
+      ${t.attempts > 1 ? `<span class="tag">attempt ${t.attempts}</span>` : ""}
+      <span class="amt">${gen(t.amount)}</span></div>
+    <div class="rul">${rows}</div>
+    ${t.evidence_url ? `<p><strong>Evidence:</strong> <span class="mono">${esc(t.evidence_url)}</span></p>` : ""}
+    ${t.verdict ? `<div class="v">${esc(t.verdict)}</div>` : ""}
+    ${t.settlement ? `<p><strong>Settlement:</strong> ${esc(t.settlement)}</p>` : ""}
+  </div>`;
+}
+
+async function refresh() {
+  if (!contract) return;
+  try {
+    const all = await readClient.readContract({ address: contract, functionName: "list_grants", args: [] });
+    const entries = all instanceof Map ? [...all.entries()] : Object.entries(all || {});
+    if (!entries.length) { $("list").innerHTML = '<p class="note" style="margin:0">No grants yet.</p>'; return; }
+    $("list").innerHTML = entries.reverse().map(([id, raw]) => {
+      const g = JSON.parse(raw);
+      const tr = Array.isArray(g.tranches) ? g.tranches : [];
+      const total = BigInt(g.total || 0) || 1n;
+      const paidPct = Number(BigInt(g.paid || 0) * 1000n / total) / 10;
+      const refPct = Number(BigInt(g.refunded || 0) * 1000n / total) / 10;
+      return `<div class="g">
+        <h4>${esc(id)} <span class="pill ${esc(g.status)}">${esc(g.status)}</span>
+          <span class="tag">${tr.length} tranche${tr.length === 1 ? "" : "s"}</span></h4>
+        <p>${esc(g.brief)}</p>
+        <p>Funder <span class="mono">${esc(short(g.funder))}</span> · builder <span class="mono">${esc(short(g.builder))}</span></p>
+        <div class="meter" title="paid / refunded / escrowed"><span style="width:${paidPct}%;background:var(--ok)"></span><span style="width:${refPct}%;background:var(--muted)"></span></div>
+        <p>${gen(g.paid)} paid · ${gen(g.refunded)} refunded · ${gen(g.total)} granted</p>
+        ${tr.map((t, i) => renderTranche(t, i, g.current, g.status === "ACTIVE")).join("")}
+      </div>`;
+    }).join("");
+  } catch (e) {
+    const m = "Could not read the registry: " + (e.message || e);
+    log(m);
+    $("list").innerHTML = '<p class="note" style="margin:0;color:var(--no)">' + esc(m) + '</p>';
+  }
+}
+
+(async () => {
+  $("list").innerHTML = '<p class="note" style="margin:0">Connecting to GenLayer Studio Next…</p>';
+  const used = await loadSdk();
+  if (!used) {
+    const msg = "Could not load the GenLayer SDK from any CDN. " + (sdkError?.message || "");
+    log(msg);
+    $("list").innerHTML = '<p class="note" style="margin:0;color:var(--no)">' + esc(msg) + "</p>";
+    return;
+  }
+  log("SDK loaded from " + used);
+  readClient = createClient({ chain: studioDevnet });
+  renderWallets();
+  loadRegistry();
+})();
+</script>
+</body>
+</html>
